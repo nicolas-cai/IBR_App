@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">IBR App</string>
+    <string name="select_yes_no">Select Yes/No</string>
+    <string name="employee_id">Employee ID</string>
+    <string name="question_1">Question 1</string>
+    <string name="question_2">Question 2</string>
+    <string name="question_3">Question 3</string>
+    <string name="question_4">Question 4</string>
+    <string name="submit">Submit</string>
+    <string name="date">Date:</string>
+    <string name="timestamp">timeStamp</string>
+    <string name="complete">Survey Complete</string>
+    <string name="score">Score</string>
+    <string name="close_app">Close App</string>
+    <string name="name">Name</string>
+</resources>

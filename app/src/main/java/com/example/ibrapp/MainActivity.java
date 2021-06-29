@@ -1,5 +1,5 @@
 package com.example.ibrapp;
-//Test thing
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,25 +16,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ListView;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Collections;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -44,6 +34,7 @@ public class MainActivity extends AppCompatActivity  {
     private int currentQuestionIndex = 0;
     //private static String ip = "192.168.1.78";
     private static final String url = "jdbc:mysql://192.168.1.78:3306/survey";
+    //String myConnection = "jdbc:mysql://localhost:3306/";
     private static final String user = "root";
     private static final String pass = "into1812";
     private Connection connection = null;
@@ -66,6 +57,9 @@ public class MainActivity extends AppCompatActivity  {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, PackageManager.PERMISSION_GRANTED);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        ConnectMySql connectMySql = new ConnectMySql();
+        connectMySql.execute("");
         question = (TextView) findViewById(R.id.textView);
         menus[0] = findViewById(R.id.spinnerYesNo1);
         menus[1] = findViewById(R.id.spinnerYesNo2);
@@ -85,7 +79,6 @@ public class MainActivity extends AppCompatActivity  {
         EditText id = (EditText) findViewById(R.id.editText);
         EditText name = (EditText) findViewById(R.id.editTextPersonName);
         Intent intent = new Intent(this, SubmissionActivity.class);
-        //Button btn = findViewById(R.id.button);
         if(TextUtils.isEmpty(id.getText()) && TextUtils.isEmpty(name.getText())) {
             id.setError("Required field");
             id.setTextColor(Color.RED);
@@ -101,24 +94,23 @@ public class MainActivity extends AppCompatActivity  {
             name.setTextColor(Color.RED);
         }
         else{
+             boolean clear = true;
             for(int i = 0; i < questionBank.length; i++){
-                String answerChoice = menus[i].getSelectedItem().toString();
-                int ansId = 0;
-                if(answerChoice.equals("")){
+                int answerChoice = menus[i].getSelectedItemPosition();
+                if(answerChoice == 0){
                     setSpinnerError(menus[i], "Required field"); //display error message for each blank---FIX
+                    clear = false;
                 }
-                else if(answerChoice.equals("Yes")){
-                    ansId=1;
-                }
-                else{
-                    ansId=2;
-                }
-                responses[i] = ansId;
-                if(!(questionBank[i].isAnswerTrue() == responses[i])){
-                    incorrect++;
+                else {
+                    responses[i] = answerChoice;
+                    if(!(questionBank[i].isAnswerTrue() == responses[i])){
+                        incorrect++;
+                    }
                 }
             }
-            startActivity(intent);
+            if(clear){
+                startActivity(intent);
+            }
         }
     }
 
@@ -148,7 +140,7 @@ public class MainActivity extends AppCompatActivity  {
             try {
                 Class.forName("com.mysql.jdbc.Driver");
                 Connection con = DriverManager.getConnection(url, user, pass);
-                System.out.println("Databaseection success");
+                System.out.println("Database Connection success");
 
                 String result = "Database Connection Successful\n";
                 Statement st = con.createStatement();

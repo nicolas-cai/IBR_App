@@ -33,12 +33,11 @@ public class MainActivity extends AppCompatActivity  {
     private static int incorrect = 0;
     private int currentQuestionIndex = 0;
     //private static String ip = "192.168.1.78";
-    private static final String url = "jdbc:mysql://192.168.1.78:3306/survey";
-    //String myConnection = "jdbc:mysql://localhost:3306/";
+    private static final String url = "jdbc:mysql://localhost:3306/questionnaire";
     private static final String user = "root";
-    private static final String pass = "into1812";
+    private static final String pass = "";
     private Connection connection = null;
-    private Question[] questionBank = new Question[]{ //CHANGE ANSWER KEY TO INDEX IN SPINNER ARRAY
+    private Question[] questionBank = new Question[]{
             new Question(R.string.question_1, 1), //0 = blank, 1 = yes, 2 = no
             new Question(R.string.question_2, 2),
             new Question(R.string.question_3, 1),
@@ -144,7 +143,7 @@ public class MainActivity extends AppCompatActivity  {
 
                 String result = "Database Connection Successful\n";
                 Statement st = con.createStatement();
-                ResultSet rs = st.executeQuery("select `question` from `qs`"); //mySQL code
+                ResultSet rs = st.executeQuery("SELECT `question` FROM questionnaire.questions;"); //mySQL code
                 ResultSetMetaData rsmd = rs.getMetaData();
 
                 while (rs.next()) {

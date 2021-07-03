@@ -33,9 +33,11 @@ public class MainActivity extends AppCompatActivity  {
     private static int incorrect = 0;
     private int currentQuestionIndex = 0;
     //private static String ip = "192.168.1.78";
-    private static final String url = "jdbc:mysql://localhost:3306/questionnaire";
-    private static final String user = "root";
-    private static final String pass = "";
+    //private static final String url = "jdbc:mysql://127.0.0.1:3306/questionnaire";
+    //private static final String user = "root";
+    //private static final String pass = "";
+    private static final String connectionString =
+            "jdbc:mysql://localhost:3306/questionnaire?user=root&password=&useUnicode=true&characterEncoding=UTF-8";
     private Connection connection = null;
     private Question[] questionBank = new Question[]{
             new Question(R.string.question_1, 1), //0 = blank, 1 = yes, 2 = no
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        System.setProperty("java.net.preferIPv4Stack" , "true");
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, PackageManager.PERMISSION_GRANTED);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -137,8 +140,9 @@ public class MainActivity extends AppCompatActivity  {
         @Override
         protected String doInBackground(String... params) {
             try {
-                Class.forName("com.mysql.jdbc.Driver");
-                Connection con = DriverManager.getConnection(url, user, pass);
+                Class.forName("com.mysql.jdbc.Driver").newInstance();
+                Connection con = DriverManager.getConnection( connectionString+
+                       "&autoReconnect=true&failOverReadOnly=false&maxReconnects=10");
                 System.out.println("Database Connection success");
 
                 String result = "Database Connection Successful\n";

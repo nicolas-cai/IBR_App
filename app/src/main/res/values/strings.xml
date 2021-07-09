@@ -11,6 +11,6 @@
     <string name="timestamp">timeStamp</string>
     <string name="complete">Survey Complete</string>
     <string name="score">Score</string>
-    <string name="close_app">Close App</string>
+    <string name="close_app">Restart App</string>
     <string name="name">Name</string>
 </resources>

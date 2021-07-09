@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -36,9 +37,6 @@ public class MainActivity extends AppCompatActivity  {
     //private static final String url = "jdbc:mysql://127.0.0.1:3306/questionnaire";
     //private static final String user = "root";
     //private static final String pass = "";
-    private static final String connectionString =
-            "jdbc:mysql://localhost:3306/questionnaire?user=root&password=&useUnicode=true&characterEncoding=UTF-8";
-    private Connection connection = null;
     private Question[] questionBank = new Question[]{
             new Question(R.string.question_1, 1), //0 = blank, 1 = yes, 2 = no
             new Question(R.string.question_2, 2),
@@ -47,22 +45,28 @@ public class MainActivity extends AppCompatActivity  {
     };
     private int [] responses = new int [questionBank.length];
 
-    TextView question;
+    private TextView [] qs = new TextView[4];
     private Spinner [] menus = new Spinner[4];
+    private String [] answerKey = new String[4];
 
+    Long timeStamp = getCurrentTimeStamp();
+    private String date = new java.text.SimpleDateFormat("yyy-MM-dd HH:mm:ss").format(new java.util.Date (timeStamp*1000));
+    Connection connect;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         System.setProperty("java.net.preferIPv4Stack" , "true");
-
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, PackageManager.PERMISSION_GRANTED);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ConnectMySql connectMySql = new ConnectMySql();
-        connectMySql.execute("");
-        question = (TextView) findViewById(R.id.textView);
+        qs[0] = findViewById(R.id.textView);
+        qs[1] = findViewById(R.id.textView2);
+        qs[2] = findViewById(R.id.textView3);
+        qs[3] = findViewById(R.id.textView4);
+
+        GetTextFromSQL();
         menus[0] = findViewById(R.id.spinnerYesNo1);
         menus[1] = findViewById(R.id.spinnerYesNo2);
         menus[2] = findViewById(R.id.spinnerYesNo3);
@@ -96,18 +100,22 @@ public class MainActivity extends AppCompatActivity  {
             name.setTextColor(Color.RED);
         }
         else{
-             boolean clear = true;
+
+            boolean clear = true;
             for(int i = 0; i < questionBank.length; i++){
                 int answerChoice = menus[i].getSelectedItemPosition();
                 if(answerChoice == 0){
-                    setSpinnerError(menus[i], "Required field"); //display error message for each blank---FIX
+                    setSpinnerError(menus[i], "Required field"); //display error message for each blank
                     clear = false;
                 }
                 else {
                     responses[i] = answerChoice;
+                    String correct = "Yes";
                     if(!(questionBank[i].isAnswerTrue() == responses[i])){
                         incorrect++;
+                        correct = "No";
                     }
+                    SendTextFromSQL(name.getText().toString(), (i+1), menus[i].getSelectedItem().toString(), correct, date);
                 }
             }
             if(clear){
@@ -127,44 +135,71 @@ public class MainActivity extends AppCompatActivity  {
         return incorrect;
     }
 
-    private class ConnectMySql extends AsyncTask<String, Void, String> { //MySQL connection class
-        String res = "";
+    public void GetTextFromSQL(){
+        //TextView question = (TextView) findViewById(R.id.textView);
+        TextView errorMessage = (TextView) findViewById(R.id.textView2); //error message in question 2
+        String records = "", error = "";
+        try {
+            ConnectionHelper con = new ConnectionHelper();
+            connect = con.getConnection();
+            for(int i = 0; i < qs.length; i++) {
+                records = "";
+                if (connect != null) {
+                    String query = "SELECT `id`, `question`, `answer` FROM questionnaire.questions WHERE `id` = " + (i+1)+";";
+                    Statement st = connect.createStatement();
+                    ResultSet rs = st.executeQuery(query);
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Toast.makeText(MainActivity.this, "Please wait...", Toast.LENGTH_SHORT).show();
-
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            try {
-                Class.forName("com.mysql.jdbc.Driver").newInstance();
-                Connection con = DriverManager.getConnection( connectionString+
-                       "&autoReconnect=true&failOverReadOnly=false&maxReconnects=10");
-                System.out.println("Database Connection success");
-
-                String result = "Database Connection Successful\n";
-                Statement st = con.createStatement();
-                ResultSet rs = st.executeQuery("SELECT `question` FROM questionnaire.questions;"); //mySQL code
-                ResultSetMetaData rsmd = rs.getMetaData();
-
-                while (rs.next()) {
-                    result += rs.getString(1).toString() + "\n";
+                    while (rs.next()) {
+                        records += rs.getString(1) + " - " + rs.getString(2) + "\n";
+                        answerKey[i] = rs.getString(3);
+                        if(answerKey[i].equals("Yes")){
+                            questionBank[i].setAnswerTrue(1);
+                        }
+                        else{
+                            questionBank[i].setAnswerTrue(2);
+                        }
+                    }
                 }
-                res = result;
-            } catch (Exception e) {
-                e.printStackTrace();
-                res = e.toString();
+                qs[i].setText(records);
             }
-            return res;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            question.setText(result);
+            connect.close();
+        }catch (Exception e){
+            error = e.getMessage();
+            errorMessage.setText(error);
+            Log.e("Error", e.getMessage());
         }
     }
+
+    public void SendTextFromSQL(String name, int question_id, String response, String correct, String datetime){
+        String records = "", error = "";
+        try {
+            ConnectionHelper con = new ConnectionHelper();
+            connect = con.getConnection();
+            if (connect != null) {
+                String query = "INSERT INTO `questionnaire`.`responses` (`name`, `question_id`, `response`, `correct`, `datetime`) VALUES ('"+name+"', '"+question_id+"', '"+response+"', '"+correct+"', '"+datetime+"');";
+                Statement st = connect.createStatement();
+                st.executeUpdate(query);
+                connect.close();
+            }
+        }catch (Exception e){
+            error = e.getMessage();
+            Log.e("Error", e.getMessage());
+        }
+    }
+
+    public static String getScore(){
+        if(getIncorrect() > 0){
+            return "Fail";
+        }
+        else{
+            return "Pass";
+        }
+    }
+    private Long getCurrentTimeStamp(){
+        Long timestamp = System.currentTimeMillis()/1000;
+        return timestamp;
+    }
+    //make a get score method and call it from Submission Activity
+
 }
 

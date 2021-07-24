@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity  {
     //private static final String url = "jdbc:mysql://127.0.0.1:3306/questionnaire";
     //private static final String user = "root";
     //private static final String pass = "";
+    //testing out git terminal commands
     private Question[] questionBank = new Question[]{
             new Question(R.string.question_1, 1), //0 = blank, 1 = yes, 2 = no
             new Question(R.string.question_2, 2),
